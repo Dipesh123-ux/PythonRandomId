@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1 align="center">Notes</h1>
+<table class="table table-striped" id="notesTable">
+  <thead>
+    <tr>
+      <th>Serial Number</th>
+      <th>Random Id</th>
+      <th>Date and Time</th>
+    </tr>
+  </thead>
+  <tbody id="notesBody">
+  </tbody>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let count = 0;
+
+    // Function to create notes
+    function createAndFetchNotes() {
+        if (count >= 6) {
+            return; // Stop creating notes after count reaches 6
+        }
+
+        fetch('/create_note_api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            count++;
+            fetch('/get_notes', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const notesBody = document.getElementById('notesBody');
+                notesBody.innerHTML = ''; // Clear existing notes
+
+                // Update the table with the fetched notes
+                data.notes.forEach((note, index) => {
+                    const newRow = notesBody.insertRow();
+                    const serialNumberCell = newRow.insertCell(0);
+                    const noteIdCell = newRow.insertCell(1);
+                    const dateTimeCell = newRow.insertCell(2);
+
+                    serialNumberCell.textContent = index + 1;
+                    noteIdCell.textContent = note.id;
+                    dateTimeCell.textContent = note.date;
+                });
+
+                if (count < 6) {
+                    setTimeout(createAndFetchNotes, 5000); // Fetch notes every 5 seconds
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching notes:', error);
+            });
+        })
+        .catch(error => {
+            console.error('Error creating note:', error);
+        });
+    }
+
+    // Initial call to start creating and fetching notes
+    createAndFetchNotes();
+});
+</script>
+{% endblock %}
